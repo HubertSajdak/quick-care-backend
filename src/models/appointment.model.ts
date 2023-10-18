@@ -10,6 +10,12 @@ export interface AppointmentDocument extends Document {
 	appointmentAddress: AddressExtended;
 	appointmentStatus: "active" | "canceled" | "postponed" | "completed";
 	consultationFee: number;
+	clinicInfo: {
+		_id: string;
+		clinicName: string;
+		photo?: string;
+		id: string;
+	};
 }
 const AppointmentSchema = new mongoose.Schema<AppointmentDocument>(
 	{
@@ -58,7 +64,7 @@ const AppointmentSchema = new mongoose.Schema<AppointmentDocument>(
 			required: [true, "required field"],
 		},
 	},
-	{ toJSON: { virtuals: true }, toObject: { virtuals: true } }
+	{ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 AppointmentSchema.virtual("doctorInfo", {
 	ref: "Doctor",

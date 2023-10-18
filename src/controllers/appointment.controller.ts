@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { t } from "i18next";
-import moment from "moment";
 import BadRequestError from "../errors/bad-request";
 import NotFoundError from "../errors/not-found";
 import UnauthenticatedError from "../errors/unauthenticated";
@@ -45,7 +44,7 @@ export const createAppointment = async (req: IAppointmentRequest, res: Response)
 		throw new BadRequestError("BAD_OBJECT_STRUCTURE");
 	}
 	const existingAppointment = await AppointmentModel.findOne({ doctorId, appointmentDate });
-	if (existingAppointment && existingAppointment.appointmentStatus !== 'canceled') {
+	if (existingAppointment && existingAppointment.appointmentStatus !== "canceled") {
 		throw new BadRequestError(`${t("errors.NO_APPOINTMENT_POSSIBLE")}`);
 	}
 
@@ -97,7 +96,6 @@ export const getUserAppointments = async (req: IAppointmentRequest, res: Respons
 	if (user.role === "patient") {
 		updatedAppointments = await AppointmentModel.find({ patientId: user.userId })
 			.select(["-password", "-role"])
-			.sort(isAsc + `${sortBy && sortBy !== "appointmentDate" && sortBy}`)
 			.skip(skip)
 			.limit(limit)
 			.populate({
@@ -109,21 +107,31 @@ export const getUserAppointments = async (req: IAppointmentRequest, res: Respons
 	if (user.role === "doctor") {
 		updatedAppointments = await AppointmentModel.find({ doctorId: user.userId })
 			.select(["-password", "-role"])
-			.sort(isAsc + `${sortBy && sortBy !== "appointmentDate" && sortBy}`)
 			.skip(skip)
 			.limit(limit);
 		totalAppointments = await AppointmentModel.countDocuments({ doctorId: user.userId });
 	}
 
 	const numOfPages = Math.ceil(totalAppointments / limit);
-	console.log(sortBy);
+
 	if (sortBy === "appointmentDate") {
 		updatedAppointments = updatedAppointments.sort((a, b) => {
-			const date1 = new Date(Date.parse(a.appointmentDate));
-			const date2 = new Date(Date.parse(b.appointmentDate));
-			return moment(date1, "YYYYMMDD,HH:mm").diff(moment(date2, "YYYYMMDD,HH:mm"));
+			const dateA = new Date(Date.parse(a.appointmentDate));
+			const dateB = new Date(Date.parse(b.appointmentDate));
+			if (sortDirection === "asc") return dateA.getTime() - dateB.getTime();
+			if (sortDirection === "desc") return dateB.getTime() - dateA.getTime();
+			return dateA.getTime() - dateB.getTime();
 		});
 	}
+
+	if (sortBy === "clinicName") {
+		updatedAppointments = updatedAppointments.sort((a, b) => {
+			if (sortDirection === "asc") return a.clinicInfo.clinicName.localeCompare(b.clinicInfo.clinicName);
+			if (sortDirection === "desc") return b.clinicInfo.clinicName.localeCompare(a.clinicInfo.clinicName);
+			return a.clinicInfo.clinicName.localeCompare(b.clinicInfo.clinicName);
+		});
+	}
+
 	res.status(StatusCodes.OK).json({ data: updatedAppointments, totalItems: totalAppointments, numOfPages });
 };
 
