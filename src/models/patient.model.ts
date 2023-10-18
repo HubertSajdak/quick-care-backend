@@ -1,5 +1,5 @@
-import mongoose, { Document } from "mongoose";
 import bcryptjs from "bcryptjs";
+import mongoose, { Document } from "mongoose";
 import validator from "validator";
 import { IsEmailOptions } from "validator/lib/isEmail";
 
