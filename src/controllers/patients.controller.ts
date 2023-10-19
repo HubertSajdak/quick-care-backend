@@ -1,13 +1,12 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { t } from "i18next";
-import BadRequestError from "../errors/bad-request";
-import UnauthenticatedError from "../errors/unauthenticated";
-import PatientModel from "../models/patient.model";
-import { PatientDocument } from "../models/patient.model";
-import { createJWT, createRefreshJWT } from "../utils/jwt";
 import jwt from "jsonwebtoken";
+import BadRequestError from "../errors/bad-request";
 import NotFoundError from "../errors/not-found";
+import UnauthenticatedError from "../errors/unauthenticated";
+import PatientModel, { PatientDocument } from "../models/patient.model";
+import { createJWT, createRefreshJWT } from "../utils/jwt";
 
 export const register = async (req: Request<{}, {}, PatientDocument>, res: Response) => {
 	const { name, surname, email, password, address, phoneNumber } = req.body;
@@ -78,7 +77,19 @@ export const getAllPatients = async (req: Request, res: Response) => {
 	const limit = Number(pageSize) || 10;
 	const skip = (page - 1) * limit;
 	const isAsc = sortDirection === "asc" ? "" : "-";
-	let patients = await PatientModel.find({})
+	let patients = await PatientModel.find(
+		search
+			? {
+					$expr: {
+						$regexMatch: {
+							input: { $concat: ["$name", " ", "$surname"] },
+							regex: search,
+							options: "i",
+						},
+					},
+			  }
+			: {}
+	)
 		.select(["-password", "-role"])
 		.sort(isAsc + `${sortBy}`)
 		.skip(skip)
@@ -86,7 +97,19 @@ export const getAllPatients = async (req: Request, res: Response) => {
 	if (!patients) {
 		throw new NotFoundError(t("errors.DOCTORS_NOT_FOUND"));
 	}
-	const totalPatients = await PatientModel.countDocuments();
+	const totalPatients = await PatientModel.countDocuments(
+		search
+			? {
+					$expr: {
+						$regexMatch: {
+							input: { $concat: ["$name", " ", "$surname"] },
+							regex: search,
+							options: "i",
+						},
+					},
+			  }
+			: {}
+	);
 	const numOfPages = Math.ceil(totalPatients / limit);
 	return res.status(StatusCodes.OK).json({ data: patients, totalItems: totalPatients, numOfPages });
 };
