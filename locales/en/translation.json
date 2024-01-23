@@ -36,7 +36,10 @@
 		"NO_APPOINTMENT_POSSIBLE":"It is not possible to make an appointment at this time",
 		"NO_DOCTOR_APPOINTMENTS_FOUND":"No doctor appointments found",
 		"NO_APPOINTMENT_FOUND":"No appointment found",
-		"NO_ACTION_ALLOWED":"You're not allowed"
+		"NO_ACTION_ALLOWED":"You're not allowed",
+		"NO_FILE_TO_REMOVE":"No file to remove",
+		"BAD_FORMAT":"Please upload an image file",
+		"TOO_LARGE_FILE_SIZE":"Please upload image smaller than 1mb"
 	},
 	"success": {
 		"USER_CREATED": "User created",

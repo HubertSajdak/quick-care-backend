@@ -71,8 +71,8 @@ const PatientSchema = new mongoose.Schema<PatientDocument>({
 		},
 		postalCode: {
 			type: String,
-			maxlength: [5, "has to be 5 characters long"],
-			minlength: [5, "has to be 5 characters long"],
+			maxlength: [6, "Invalid postal code"],
+			minlength: [6, "Invalid postal code"],
 			required: [true, "Required Field"],
 		},
 	},

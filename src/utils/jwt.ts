@@ -9,7 +9,7 @@ export interface IJWTPayload {
 }
 export const createJWT = ({ payload }: { payload: IJWTPayload }) => {
 	const token = jwt.sign({ ...payload }, process.env.JWT_SECRET!, {
-		expiresIn: process.env.JWT_LIFETIME!,
+		expiresIn: "1h",
 	});
 	return token;
 };
@@ -18,7 +18,7 @@ export const verifyJWT = ({ token }: { token: string }) => {
 };
 export const createRefreshJWT = ({ payload }: { payload: IJWTPayload }) => {
 	const token = jwt.sign({ ...payload }, process.env.JWT_REFRESH_SECRET!, {
-		expiresIn: process.env.JWT_REFRESH_LIFETIME!,
+		expiresIn: "1d",
 	});
 	return token;
 };

@@ -1,16 +1,16 @@
-import BadRequestError from "../errors/bad-request";
 import { Request, Response } from "express";
+import { UploadedFile } from "express-fileupload";
+import { StatusCodes } from "http-status-codes";
 import { t } from "i18next";
 import jwt from "jsonwebtoken";
-import UserModel, { DoctorDocument } from "../models/doctor.model";
-import { StatusCodes } from "http-status-codes";
-import { createJWT, createRefreshJWT, IJWTPayload, verifyJWT, verifyRefreshJWT } from "../utils/jwt";
-import UnauthenticatedError from "../errors/unauthenticated";
-import DoctorModel from "../models/doctor.model";
-import PatientModel from "../models/patient.model";
 import path from "path";
-import { UploadedFile } from "express-fileupload";
-
+import BadRequestError from "../errors/bad-request";
+import UnauthenticatedError from "../errors/unauthenticated";
+import { DoctorDocument, default as DoctorModel, default as UserModel } from "../models/doctor.model";
+import PatientModel from "../models/patient.model";
+import { createJWT, createRefreshJWT } from "../utils/jwt";
+import * as fs from "fs";
+import NotFoundError from "../errors/not-found";
 export interface AuthenticatedUserValues extends Request {
 	user?: {
 		userId: string;
@@ -104,7 +104,7 @@ export const refreshToken = (req: Request, res: Response) => {
 		jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!, (err: jwt.VerifyErrors | null, decoded: any) => {
 			//elaborate on these errors later and remove any from decoded :)
 			if (err) {
-				return res.status(StatusCodes.NOT_ACCEPTABLE).json({ message: `${t("errors.REFRESH_TOKEN_EXP")}` });
+				return res.status(StatusCodes.UNAUTHORIZED).json({ message: `${t("errors.REFRESH_TOKEN_EXP")}` });
 			}
 			const accessToken = createJWT({
 				payload: {
@@ -188,10 +188,10 @@ export const uploadPhoto = async (req: AuthenticatedUserValues, res: Response) =
 	}
 	const userPhoto = req.files?.file as UploadedFile;
 	if (!userPhoto.mimetype.startsWith("image")) {
-		throw new BadRequestError("Please upload an image file");
+		throw new BadRequestError("errors.BAD_FORMAT");
 	}
 	if (userPhoto.size > maxSize) {
-		throw new BadRequestError("Please upload image smaller than 1mb");
+		throw new BadRequestError(t("errors.TOO_LARGE_FILE_SIZE"));
 	}
 	const imagePath = path.join(__dirname, "../public/uploads/" + `${userPhoto.name}`);
 	await userPhoto.mv(imagePath);
@@ -206,4 +206,33 @@ export const uploadPhoto = async (req: AuthenticatedUserValues, res: Response) =
 		await PatientModel.updateOne({ _id: user.userId }, { photo: `uploads/${userPhoto.name}` });
 		res.status(StatusCodes.OK).json({ message: `${t("success.PHOTO_UPDATED")}` });
 	}
+};
+
+export const removePhoto = async (req: AuthenticatedUserValues, res: Response) => {
+	const user = req.user;
+	if (!user) {
+		throw new UnauthenticatedError("errors.INVALID_AUTHENTICATION");
+	}
+	const isDoctor = await DoctorModel.findOne({ _id: user.userId }).select("-password");
+	const isPatient = await PatientModel.findOne({ _id: user.userId }).select("-password");
+	if (!isDoctor && !isPatient) {
+		throw new UnauthenticatedError("errors.REFRESH_TOKEN_EXP");
+	}
+	if (!isDoctor?.photo && !isPatient?.photo) {
+		throw new BadRequestError("errors.NO_FILE_TO_REMOVE");
+	}
+	const imagePath = path.join(__dirname, "../public/" + `${isDoctor?.photo || isPatient?.photo}`);
+	if (isDoctor) {
+		await DoctorModel.findOneAndUpdate({ _id: user.userId }, { photo: null });
+	}
+	if (isPatient) {
+		await PatientModel.findOneAndUpdate({ _id: user.userId }, { photo: null });
+	}
+	fs.unlink(imagePath,(err)=>{
+		if(err){
+			throw new NotFoundError("errors.NO_FILE_TO_REMOVE");
+		}
+	})
+
+	res.status(StatusCodes.OK).json({ message: `${t("success.PHOTO_UPDATED")}` });
 };

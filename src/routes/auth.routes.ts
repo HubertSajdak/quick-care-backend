@@ -1,9 +1,10 @@
 import {
+	getUserData,
 	login,
-	register,
 	logout,
 	refreshToken,
-	getUserData,
+	register,
+	removePhoto,
 	updateUserInfo,
 	updateUserPassword,
 	uploadPhoto,
@@ -22,5 +23,6 @@ router.get("/logout", logout);
 router.put("/me", authenticateUser, updateUserInfo);
 router.put("/me/updatePassword", authenticateUser, updateUserPassword);
 router.put("/me/uploadPhoto", authenticateUser, uploadPhoto);
+router.put("/me/deletePhoto", authenticateUser, removePhoto);
 
 export default router;
