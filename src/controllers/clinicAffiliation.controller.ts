@@ -5,9 +5,6 @@ import BadRequestError from "../errors/bad-request";
 import NotFoundError from "../errors/not-found";
 import UnauthenticatedError from "../errors/unauthenticated";
 import ClinicAffiliationModel from "../models/clinicAffiliation.model";
-import DoctorModel from "../models/doctor.model";
-import { AddressExtended } from "../models/patient.model";
-import ClinicModel from "../models/clinic.model";
 
 export interface IClinicAffiliationRequest extends Request {
 	user?: {
@@ -30,7 +27,10 @@ export const getCurrentUserClinicAffiliations = async (req: IClinicAffiliationRe
 	if (!user) {
 		throw new UnauthenticatedError("errors.INVALID_AUTHENTICATION");
 	}
-	const clinicAffiliations = await ClinicAffiliationModel.find({ doctorId: user.userId });
+	const clinicAffiliations = await ClinicAffiliationModel.find({ doctorId: user.userId }).populate({
+		path: "clinicInfo",
+		select: "workingTime address phoneNumber photo",
+	});
 	if (!clinicAffiliations) {
 		throw new NotFoundError(t("errors.CLINIC_AFFILIATION_NOT_FOUND"));
 	}
@@ -64,7 +64,7 @@ export const createCurrentDoctorClinicAffiliation = async (req: IClinicAffiliati
 	const {
 		clinicName,
 		clinicId,
-		workingHours,
+		workingTime,
 		available,
 		reasonOfAbsence,
 		absenceTime,
@@ -72,7 +72,7 @@ export const createCurrentDoctorClinicAffiliation = async (req: IClinicAffiliati
 		timePerPatient,
 	} = req.body;
 
-	if (!clinicName || !clinicId || !workingHours || !consultationFee || !timePerPatient) {
+	if (!clinicName || !clinicId || !workingTime || !consultationFee || !timePerPatient) {
 		throw new BadRequestError(t("errors.BAD_OBJECT_STRUCTURE"));
 	}
 	const isClinicAffiliation = await ClinicAffiliationModel.findOne({ clinicId, doctorId: user.userId });
@@ -90,8 +90,8 @@ export const updateClinicAffiliation = async (req: IClinicAffiliationRequest, re
 	if (!user) {
 		throw new UnauthenticatedError("errors.INVALID_AUTHENTICATION");
 	}
-	const { clinicName, clinicId, workingHours, available, consultationFee, timePerPatient } = req.body;
-	if (!clinicName || !clinicId || !workingHours || !available || !consultationFee || !timePerPatient) {
+	const { clinicName, clinicId, workingTime, available, consultationFee, timePerPatient } = req.body;
+	if (!clinicName || !clinicId || !workingTime || !available || !consultationFee || !timePerPatient) {
 		throw new BadRequestError(t("errors.BAD_OBJECT_STRUCTURE"));
 	}
 	await ClinicAffiliationModel.updateOne({ _id: clinicAffiliationId }, { doctorId: user.userId, ...req.body });

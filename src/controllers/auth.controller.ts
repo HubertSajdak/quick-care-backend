@@ -21,7 +21,7 @@ export interface AuthenticatedUserValues extends Request {
 }
 
 export const register = async (req: Request<{}, {}, DoctorDocument>, res: Response) => {
-	const { name, surname, email, password, role } = req.body;
+	const { name, surname, email, password} = req.body;
 	const isUser = await UserModel.findOne({ email });
 	if (isUser) {
 		throw new BadRequestError("errors.EMAIL_EXIST");
