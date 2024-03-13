@@ -14,7 +14,7 @@ export interface ClinicAffiliationDocument extends Document {
 	doctorId: mongoose.SchemaDefinitionProperty<string>;
 	clinicId: mongoose.SchemaDefinitionProperty<string>;
 	clinicName: string;
-	workingHours: WorkingHours[];
+	workingTime: WorkingHours[];
 	available: boolean;
 	reasonOfAbsence?: string | null;
 	absenceTime?: AbsenceTimeValues | null;
@@ -37,7 +37,7 @@ const ClinicAffiliationSchema = new mongoose.Schema<ClinicAffiliationDocument>(
 			type: String,
 			required: [true, "required field"],
 		},
-		workingHours: [
+		workingTime: [
 			{
 				weekDay: {
 					type: String,

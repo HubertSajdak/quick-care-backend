@@ -25,6 +25,12 @@ DoctorSpecializationSchema.virtual("Specialization", {
 	foreignField: "_id",
 	justOne: true,
 });
+DoctorSpecializationSchema.virtual("SpecializationKey", {
+	ref: "Specialization",
+	localField: "specializationKey",
+	foreignField: "specializationKey",
+	justOne: true,
+});
 const DoctorSpecializationModel = mongoose.model<DoctorSpecializationDocument>(
 	"DoctorSpecialization",
 	DoctorSpecializationSchema

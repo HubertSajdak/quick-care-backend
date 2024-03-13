@@ -14,6 +14,7 @@ export interface DoctorDocument extends Document {
 	role: "doctor";
 	comparePassword: (candidatePassword: string) => Promise<boolean>;
 	DoctorSpecialization: mongoose.SchemaDefinitionProperty<DoctorSpecializationDocument>[] | undefined;
+	doctorSpecializations: string[];
 }
 const DoctorSchema = new mongoose.Schema<DoctorDocument>(
 	{
@@ -56,6 +57,11 @@ const DoctorSchema = new mongoose.Schema<DoctorDocument>(
 			enum: ["doctor"],
 			default: "doctor",
 		},
+		// doctorSpecializations: [
+		// 	{
+		// 		type: String,
+		// 	},
+		// ],
 	},
 	{ toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
@@ -66,7 +72,12 @@ DoctorSchema.virtual("DoctorSpecialization", {
 	foreignField: "doctorId",
 	justOne: false,
 });
-
+DoctorSchema.virtual("ClinicAffiliation", {
+	ref: "ClinicAffiliation",
+	localField: "_id",
+	foreignField: "doctorId",
+	justOne: false,
+});
 DoctorSchema.pre("save", async function () {
 	if (!this.isModified("password")) return;
 	const salt = await bcryptjs.genSalt(10);

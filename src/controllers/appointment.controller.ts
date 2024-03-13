@@ -6,6 +6,7 @@ import NotFoundError from "../errors/not-found";
 import UnauthenticatedError from "../errors/unauthenticated";
 import UnauthorizedError from "../errors/unauthorized";
 import AppointmentModel, { AppointmentDocument } from "../models/appointment.model";
+import { chunkArray } from "../utils/chunkArray.service";
 import { completeAppointment } from "../utils/completeAppointment.service";
 
 export interface IAppointmentRequest extends Request {
@@ -22,6 +23,8 @@ export const createAppointment = async (req: IAppointmentRequest, res: Response)
 	if (!user) {
 		throw new UnauthenticatedError("errors.INVALID_AUTHENTICATION");
 	}
+
+	console.log(req.body);
 	const {
 		doctorId,
 		clinicId,
@@ -61,10 +64,12 @@ export const getDoctorAppointments = async (req: IAppointmentRequest, res: Respo
 	if (!doctorId) {
 		throw new BadRequestError("errors.BAD_OBJECT_STRUCTURE");
 	}
-	const doctorAppointments = await AppointmentModel.find({ doctorId });
+	let doctorAppointments;
+	doctorAppointments = doctorAppointments = await AppointmentModel.find({ doctorId });
 	if (!doctorAppointments) {
-		throw new NotFoundError("erros.NO_DOCTOR_APPOINTMENTS_FOUND");
+		throw new NotFoundError("errors.NO_DOCTOR_APPOINTMENTS_FOUND");
 	}
+	doctorAppointments = doctorAppointments.filter(appointment => appointment.appointmentStatus === "active")
 	res.status(StatusCodes.OK).json({ data: doctorAppointments, totalItems: doctorAppointments.length });
 };
 
@@ -73,7 +78,7 @@ export const getUserAppointments = async (req: IAppointmentRequest, res: Respons
 	if (!user) {
 		throw new UnauthenticatedError("errors.INVALID_AUTHENTICATION");
 	}
-	const { search, sortBy, sortDirection, pageSize, currentPage } = req.query;
+	const { search, sortBy, sortDirection, pageSize, currentPage, appointmentFilter } = req.query;
 	const page = Number(currentPage) || 1;
 	const limit = Number(pageSize) || 10;
 	const skip = (page - 1) * limit;
@@ -96,30 +101,27 @@ export const getUserAppointments = async (req: IAppointmentRequest, res: Respons
 	if (user.role === "patient") {
 		updatedAppointments = await AppointmentModel.find({ patientId: user.userId })
 			.select(["-password", "-role"])
-			.skip(skip)
-			.limit(limit)
+			// .skip(skip)
+			// .limit(limit)
 			.populate({
 				path: "doctorInfo clinicInfo",
-				select: "name surname photo clinicName",
+				select: "name surname photo clinicName phoneNumber",
 			});
 		totalAppointments = await AppointmentModel.countDocuments({ patientId: user.userId });
 	}
 	if (user.role === "doctor") {
-		updatedAppointments = await AppointmentModel.find({ doctorId: user.userId })
-			.select(["-password", "-role"])
-			.skip(skip)
-			.limit(limit);
+		updatedAppointments = await AppointmentModel.find({ doctorId: user.userId }).select(["-password", "-role"]);
+		// .skip(skip)
+		// .limit(limit);
 		totalAppointments = await AppointmentModel.countDocuments({ doctorId: user.userId });
 	}
 
-	const numOfPages = Math.ceil(totalAppointments / limit);
-
 	if (sortBy === "appointmentDate") {
 		updatedAppointments = updatedAppointments.sort((a, b) => {
-			const dateA = new Date(Date.parse(a.appointmentDate));
-			const dateB = new Date(Date.parse(b.appointmentDate));
-			if (sortDirection === "asc") return dateA.getTime() - dateB.getTime();
-			if (sortDirection === "desc") return dateB.getTime() - dateA.getTime();
+			const dateA = new Date(a.appointmentDate);
+			const dateB = new Date(b.appointmentDate);
+			if (sortDirection === "desc") return dateA.getTime() - dateB.getTime();
+			if (sortDirection === "asc") return dateB.getTime() - dateA.getTime();
 			return dateA.getTime() - dateB.getTime();
 		});
 	}
@@ -131,8 +133,26 @@ export const getUserAppointments = async (req: IAppointmentRequest, res: Respons
 			return a.clinicInfo.clinicName.localeCompare(b.clinicInfo.clinicName);
 		});
 	}
+	if (appointmentFilter && appointmentFilter !== "all") {
+		updatedAppointments = updatedAppointments.filter(el => el.appointmentStatus === appointmentFilter.toString());
+	}
 
-	res.status(StatusCodes.OK).json({ data: updatedAppointments, totalItems: totalAppointments, numOfPages });
+	if (search) {
+		updatedAppointments = updatedAppointments.filter(
+			el =>
+				el.clinicInfo.clinicName.toLowerCase().startsWith(search.toString().toLowerCase()) ||
+				el.doctorInfo.name.toLowerCase().startsWith(search.toString().toLowerCase()) ||
+				el.doctorInfo.surname.toLowerCase().startsWith(search.toString().toLowerCase()) ||
+				el.clinicInfo.phoneNumber.toString().startsWith(search.toString().toLowerCase()) ||
+				el.appointmentAddress.street.toLowerCase().startsWith(search.toString().toLowerCase()) ||
+				el.appointmentAddress.city.toLowerCase().startsWith(search.toString().toLowerCase()) ||
+				el.appointmentAddress.postalCode.toLowerCase().startsWith(search.toString().toLowerCase())
+		);
+	}
+	const numOfPages = Math.ceil(updatedAppointments.length / limit);
+	const splittedArr = chunkArray(updatedAppointments, limit);
+	const pageItems = splittedArr[page - 1];
+	res.status(StatusCodes.OK).json({ data: pageItems, totalItems: updatedAppointments.length, numOfPages });
 };
 
 export const cancelAppointment = async (req: IAppointmentRequest, res: Response) => {

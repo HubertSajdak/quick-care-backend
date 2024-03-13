@@ -43,7 +43,9 @@ export const getCurrentDoctorSpecializations = async (req: IDoctorRequest, res: 
 	if (!userId) {
 		throw new BadRequestError(t("errors.DOCTOR_NOT_LOGGED_IN"));
 	}
-	const doctorSpecializations = await DoctorSpecializationModel.find({ doctorId: userId });
+	const doctorSpecializations = await DoctorSpecializationModel.find({ doctorId: userId }).populate({
+		path:"Specialization"
+	});
 	if (!doctorSpecializations) {
 		throw new NotFoundError(t("errors.SPECIALIZATIONS_NOT_FOUND"));
 	}

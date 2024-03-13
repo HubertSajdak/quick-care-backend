@@ -100,10 +100,16 @@ export const getAllDoctors = async (req: Request, res: Response) => {
 				path: "Specialization",
 			},
 		})
+		.populate({
+			path: "ClinicAffiliation",
+			populate: {
+				path: "clinicInfo",
+			},
+		})
 		.sort(isAsc + `${sortBy}`)
 		.skip(skip)
 		.limit(limit);
-	// {
+	// {yarn
 	// 	$lookup: {
 	// 		from: "doctorspecializations",
 	// 		localField: "_id",
@@ -174,6 +180,12 @@ export const getSingleDoctor = async (req: Request, res: Response) => {
 			populate: {
 				path: "Specialization",
 				select: "specializationKey",
+			},
+		})
+		.populate({
+			path: "ClinicAffiliation",
+			populate: {
+				path: "clinicInfo",
 			},
 		});
 	if (!doctor) {

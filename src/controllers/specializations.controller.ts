@@ -10,7 +10,7 @@ export const getAllSpecializations = async (req: Request, res: Response) => {
 	if (!specializations) {
 		throw new NotFoundError(t("errors.SPECIALIZATIONS_NOT_FOUND"));
 	}
-	return res.status(StatusCodes.OK).json({ specializations, totalItems: specializations.length });
+	return res.status(StatusCodes.OK).json({ data: specializations, totalItems: specializations.length });
 };
 
 export const getSingleSpecialization = async (req: Request, res: Response) => {

@@ -15,6 +15,13 @@ export interface AppointmentDocument extends Document {
 		clinicName: string;
 		photo?: string;
 		id: string;
+		phoneNumber: number;
+	};
+	doctorInfo: {
+		_id: string;
+		name: string;
+		surname: string;
+		photo?: string | undefined;
 	};
 }
 const AppointmentSchema = new mongoose.Schema<AppointmentDocument>(
@@ -50,8 +57,8 @@ const AppointmentSchema = new mongoose.Schema<AppointmentDocument>(
 			},
 			postalCode: {
 				type: String,
-				maxlength: [5, "has to be 5 characters long"],
-				minlength: [5, "has to be 5 characters long"],
+				maxlength: [6, "postal code has to be 6 characters long"],
+				minlength: [6, "postal code has to be 6 characters long"],
 				required: [true, "Required Field"],
 			},
 		},

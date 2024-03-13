@@ -1,13 +1,14 @@
 import express from "express";
-import { authenticateUser, authorizePermissions } from "../middleware/authentication.middleware";
 import {
 	createClinic,
 	deleteClinic,
+	deleteClinicPhoto,
 	getAllClinics,
 	getSingleClinic,
 	updateClinic,
 	uploadClinicPhoto,
 } from "../controllers/clinic.controller";
+import { authenticateUser, authorizePermissions } from "../middleware/authentication.middleware";
 
 const router = express.Router();
 router
@@ -19,5 +20,8 @@ router
 	.get(authenticateUser, getSingleClinic)
 	.put(authenticateUser, authorizePermissions("doctor"), updateClinic)
 	.delete(authenticateUser, authorizePermissions("doctor"), deleteClinic);
-router.route("/uploadPhoto/:id").put(authenticateUser, authorizePermissions("doctor"), uploadClinicPhoto);
+router
+	.route("/uploadPhoto/:id")
+	.put(authenticateUser, authorizePermissions("doctor"), uploadClinicPhoto)
+	.delete(authenticateUser, authorizePermissions("doctor"), deleteClinicPhoto);
 export default router;
