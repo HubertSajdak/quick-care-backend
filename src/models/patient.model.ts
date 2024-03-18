@@ -26,6 +26,9 @@ export interface PatientDocument extends Document {
 	address: AddressExtended;
 	photo?: string;
 	password: string;
+	birthDate:string;
+	height:number;
+	weight:number;
 	role: "patient";
 	comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
@@ -79,6 +82,24 @@ const PatientSchema = new mongoose.Schema<PatientDocument>({
 	photo: {
 		type: String,
 		default: null,
+	},
+	birthDate:{
+		type:String,
+		default:null,
+		required: [true, "Required Field"],
+
+	},
+	height:{
+		type:Number,
+		default:null,
+		required: [true, "Required Field"],
+
+	},
+	weight:{
+		type:Number,
+		default:null,
+		required: [true, "Required Field"],
+
 	},
 	role: {
 		type: String,
