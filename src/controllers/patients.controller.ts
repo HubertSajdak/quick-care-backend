@@ -7,6 +7,7 @@ import NotFoundError from "../errors/not-found";
 import UnauthenticatedError from "../errors/unauthenticated";
 import PatientModel, { PatientDocument } from "../models/patient.model";
 import { createJWT, createRefreshJWT } from "../utils/jwt";
+import patientModel from "../models/patient.model";
 
 export const register = async (req: Request<{}, {}, PatientDocument>, res: Response) => {
 	const { name, surname, email, password, address, phoneNumber } = req.body;
@@ -113,4 +114,11 @@ export const getAllPatients = async (req: Request, res: Response) => {
 	const numOfPages = Math.ceil(totalPatients / limit);
 	return res.status(StatusCodes.OK).json({ data: patients, totalItems: totalPatients, numOfPages });
 };
-export const getSinglePatient = (req: Request, res: Response) => {};
+export const getSinglePatient = async(req: Request, res: Response) => {
+	const patientId = req.params.id
+	const patient = await patientModel.findOne({_id:patientId}).select("-password")
+	if(!patient) {
+		throw new NotFoundError(t("errors.PATIENT_NOT_FOUND"))
+	}
+	return res.status(StatusCodes.OK).json({patient})
+};
