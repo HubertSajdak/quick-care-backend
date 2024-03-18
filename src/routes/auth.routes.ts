@@ -1,4 +1,5 @@
 import {
+	deleteAccount,
 	getUserData,
 	login,
 	logout,
@@ -11,7 +12,7 @@ import {
 } from "../controllers/auth.controller";
 
 import express from "express";
-import { authenticateUser } from "../middleware/authentication.middleware";
+import {authenticateUser} from "../middleware/authentication.middleware";
 
 const router = express.Router();
 
@@ -21,6 +22,7 @@ router.post("/refreshToken", refreshToken);
 router.get("/me", authenticateUser, getUserData);
 router.get("/logout", logout);
 router.put("/me", authenticateUser, updateUserInfo);
+router.delete("/me", authenticateUser, deleteAccount)
 router.put("/me/updatePassword", authenticateUser, updateUserPassword);
 router.put("/me/uploadPhoto", authenticateUser, uploadPhoto);
 router.put("/me/deletePhoto", authenticateUser, removePhoto);

@@ -23,6 +23,12 @@ export interface AppointmentDocument extends Document {
 		surname: string;
 		photo?: string | undefined;
 	};
+	patientInfo:{
+		_id:string;
+		name:string;
+		surname:string;
+		photo?:string | undefined
+	}
 }
 const AppointmentSchema = new mongoose.Schema<AppointmentDocument>(
 	{
@@ -86,6 +92,12 @@ AppointmentSchema.virtual("clinicInfo", {
 	foreignField: "_id",
 	justOne: true,
 });
+AppointmentSchema.virtual("patientInfo",{
+	ref:"Patient",
+	localField:"patientId",
+	foreignField:"_id",
+	justOne:true,
+})
 const AppointmentModel = mongoose.model<AppointmentDocument>("Appointment", AppointmentSchema);
 
 export default AppointmentModel;
