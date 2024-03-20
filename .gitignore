@@ -1,4 +1,7 @@
 /node_modules
 .env
 .idea
+<<<<<<< HEAD
+=======
 .prettierignore
+>>>>>>> eac5733c702252df8f809f70adb2bc7cffa996a9

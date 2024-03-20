@@ -108,6 +108,8 @@ export const getAllDoctors = async (req: Request, res: Response) => {
             populate: {
                 path: "clinicInfo",
             },
+        }).populate({
+            path: "DoctorAppointments"
         })
         .sort(isAsc + `${sortBy}`)
         .skip(skip)
