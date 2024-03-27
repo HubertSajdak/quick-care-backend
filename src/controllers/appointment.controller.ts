@@ -8,6 +8,7 @@ import UnauthorizedError from "../errors/unauthorized";
 import AppointmentModel, {AppointmentDocument} from "../models/appointment.model";
 import {chunkArray} from "../utils/chunkArray.service";
 import {completeAppointment} from "../utils/completeAppointment.service";
+import moment from "moment";
 
 export interface IAppointmentRequest extends Request {
     user?: {
@@ -31,6 +32,7 @@ export const createAppointment = async (req: IAppointmentRequest, res: Response)
         consultationFee,
         appointmentAddress,
         appointmentStatus,
+        timePerPatient,
     } = req.body;
     if (
         !doctorId ||
@@ -40,7 +42,7 @@ export const createAppointment = async (req: IAppointmentRequest, res: Response)
         appointmentDate === "Invalid date" ||
         !appointmentAddress ||
         !appointmentStatus ||
-        !consultationFee
+        !consultationFee || !timePerPatient
     ) {
         throw new BadRequestError("BAD_OBJECT_STRUCTURE");
     }
@@ -49,7 +51,11 @@ export const createAppointment = async (req: IAppointmentRequest, res: Response)
         throw new BadRequestError(`${t("errors.NO_APPOINTMENT_POSSIBLE")}`);
     }
 
-    await AppointmentModel.create({...req.body, patientId: user.userId});
+    await AppointmentModel.create({
+        ...req.body,
+        patientId: user.userId,
+        estimatedEndDate: moment(appointmentDate, "YYYY-MM-DD HH:mm").add(timePerPatient, "minutes").format("YYYY-MM-DD HH:mm")
+    })
     res.status(StatusCodes.CREATED).json({message: t("success.APPOINTMENT_CREATED")});
 };
 
